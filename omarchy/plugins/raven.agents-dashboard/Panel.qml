@@ -80,9 +80,9 @@ Item {
     title: "Blackbox Agents"
     visible: false
     color: Commons.Color.background
-    implicitWidth: 1120
-    implicitHeight: 760
-    minimumSize: Qt.size(820, 560)
+    implicitWidth: 1180
+    implicitHeight: 680
+    minimumSize: Qt.size(940, 560)
 
     FocusScope {
       id: focusScope
@@ -165,7 +165,7 @@ Item {
           GridLayout {
             id: grid
             width: cards.width
-            columns: cards.width >= 980 ? 2 : 1
+            columns: cards.width >= 1040 ? 3 : (cards.width >= 700 ? 2 : 1)
             rowSpacing: Style.space(14)
             columnSpacing: Style.space(14)
 
@@ -175,8 +175,8 @@ Item {
               Rectangle {
                 required property var modelData
                 Layout.fillWidth: true
-                Layout.minimumHeight: 190
-                Layout.preferredHeight: 210
+                Layout.minimumHeight: 150
+                Layout.preferredHeight: 170
                 radius: Style.cornerRadius
                 color: Qt.rgba(Commons.Color.popups.background.r,
                                Commons.Color.popups.background.g,

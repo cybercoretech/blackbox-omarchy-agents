@@ -53,5 +53,5 @@ omarchy-shell shell open raven.agents-dashboard
 omarchy-shell shell close raven.agents-dashboard
 ```
 
-The window has a two-column provider grid, provider scope selector, quota
-meters, local-activity labels, refresh controls, and keyboard shortcuts.
+The window uses a compact three-column provider grid, provider scope selector,
+quota meters, local-activity labels, refresh controls, and keyboard shortcuts.
