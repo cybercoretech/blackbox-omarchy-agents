@@ -1481,7 +1481,7 @@ Panel {
   // One provider: its mark, name, and plan, then its limits — or, with
   // several accounts, each account's name, state, and limits in turn. A
   // prepaid provider shows its balance instead.
-  component ProviderSection: Column {
+  component ProviderSection: Item {
     id: section
     property var provider: null
     property int providerIndex: -1
@@ -1489,10 +1489,25 @@ Panel {
     readonly property bool multi: accounts.length > 1
     readonly property var windows: root.displayWindows(provider)
     readonly property var balance: provider ? (provider.balance || null) : null
-    spacing: Style.space(16)
+    implicitHeight: content.implicitHeight + Style.space(20)
     opacity: root.dragProviderId !== "" && provider && root.dragProviderId === provider.providerId ? 0.5 : 1.0
 
-    PanelSeparator { foreground: root.foreground }
+    Rectangle {
+      anchors.fill: parent
+      color: root.alpha(root.surface, 0.72)
+      border.width: 1
+      border.color: root.alpha(section.lit ? root.cyberCyan : root.cyberLine, section.lit ? 0.72 : 0.9)
+      radius: 2
+    }
+
+    Column {
+      id: content
+      x: Style.space(10)
+      y: Style.space(10)
+      width: parent.width - Style.space(20)
+      spacing: Style.space(16)
+
+      PanelSeparator { foreground: root.foreground }
 
     Item {
       id: sectionHead
@@ -1630,6 +1645,7 @@ Panel {
           window: modelData
           stale: !!section.provider && section.provider.limitsStale === true
           fetchedAt: section.provider ? Number(section.provider.limitsFetchedAt || 0) : 0
+        }
         }
       }
 
