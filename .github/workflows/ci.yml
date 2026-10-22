@@ -1,0 +1,31 @@
+name: Agents widget CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate source and fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run local checks
+        run: ./scripts/test-local.sh
+
+      - name: Check patch whitespace
+        run: git diff --check
+
+      - name: Scan tracked source for credential material
+        shell: bash
+        run: |
+          if git grep -nE 'BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY|ghp_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+|AIza[0-9A-Za-z_-]{20,}|sk-[A-Za-z0-9]{20,}'; then
+            echo "::error::credential-like material found in tracked files"
+            exit 1
+          fi

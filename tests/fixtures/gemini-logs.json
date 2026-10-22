@@ -1,0 +1,18 @@
+[
+  {
+    "sessionId": "fixture-session",
+    "type": "user",
+    "timestamp": "2026-10-22T12:00:00Z",
+    "message": "fixture prompt"
+  },
+  {
+    "sessionId": "fixture-session",
+    "type": "model",
+    "timestamp": "2026-10-22T12:00:03Z",
+    "model": "gemini-2.5-pro",
+    "usage": {
+      "input": 120,
+      "output": 80
+    }
+  }
+]

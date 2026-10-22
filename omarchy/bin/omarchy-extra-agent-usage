@@ -136,6 +136,115 @@ def openrouter_limits():
     return _openrouter
 
 
+def json_objects(path):
+    """Yield JSON objects from JSONL files or JSON arrays/objects."""
+    try:
+        text = path.read_text(errors="replace")
+    except OSError:
+        return
+    try:
+        value = json.loads(text)
+    except ValueError:
+        for line in text.splitlines():
+            try:
+                value = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(value, dict):
+                yield value
+        return
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, dict):
+                yield item
+    elif isinstance(value, dict):
+        yield value
+
+
+def event_value(event, *keys):
+    for key in keys:
+        value = event.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def collect_event_files(agent_id, name, roots, patterns):
+    """Collect prompt/session/token facts from provider-owned event files."""
+    stats = blank()
+    files = []
+    for root in roots:
+        if not root.exists():
+            continue
+        for pattern in patterns:
+            files.extend(root.rglob(pattern))
+    seen_sessions = set()
+    for path in sorted(set(files)):
+        for event in json_objects(path):
+            when = day(event_value(event, "timestamp", "createdAt", "created_at", "time", "date"))
+            if not when:
+                continue
+            session = event_value(event, "sessionId", "session_id", "conversationId", "conversation_id")
+            session_key = f"{path}:{session or 'file'}"
+            role = str(event_value(event, "role", "type", "kind", "event") or "").lower()
+            if role in {"user", "prompt", "human", "user_message", "user-message"}:
+                add(stats, when, None, prompts=1)
+            usage = event.get("usage") or event.get("usageMetadata") or event.get("tokens") or {}
+            if not isinstance(usage, dict):
+                usage = {}
+            model = model_id(event_value(event, "model", "modelName", "model_id") or usage.get("model"))
+            input_tokens = event_value(usage, "input", "input_tokens", "promptTokenCount")
+            output_tokens = event_value(usage, "output", "output_tokens", "candidatesTokenCount", "completion_tokens")
+            cache_read = event_value(usage, "cache_read", "cacheReadInputTokens", "cachedContentTokenCount")
+            cache_write = event_value(usage, "cache_write", "cacheCreationInputTokens")
+            has_usage = any(value not in (None, "") for value in (input_tokens, output_tokens, cache_read, cache_write))
+            if has_usage:
+                add(stats, when, model, input_tokens=input_tokens, output_tokens=output_tokens,
+                    cache_read=cache_read, cache_write=cache_write)
+            if session_key not in seen_sessions and role in {
+                    "user", "prompt", "human", "user_message", "user-message",
+                    "assistant", "model", "response", "assistant_message", "assistant-message"}:
+                stats["totalSessions"] += 1
+                stats["activeDates"].add(when)
+                if when in stats["recentDays"]:
+                    stats["recentDays"][when] += 0
+                seen_sessions.add(session_key)
+    if stats["totalPrompts"] or stats["totalSessions"] or stats["modelUsage"]:
+        finish(agent_id, name, stats)
+
+
+def collect_cursor():
+    collect_event_files(
+        "cursor", "Cursor Agent",
+        [Path.home() / ".cursor"],
+        ["*.jsonl", "logs.json", "*transcript*.json", "*session*.json"],
+    )
+
+
+def collect_gemini():
+    collect_event_files(
+        "gemini", "Gemini CLI",
+        [Path.home() / ".gemini/tmp"],
+        ["logs.json", "*.jsonl", "*transcript*.json"],
+    )
+
+
+def collect_pi():
+    collect_event_files(
+        "pi", "Pi",
+        [Path.home() / ".pi/agent"],
+        ["*.jsonl", "*session*.json", "*transcript*.json"],
+    )
+
+
+def collect_continue():
+    collect_event_files(
+        "continue", "Continue",
+        [Path.home() / ".continue", Path.home() / ".local/share/continue"],
+        ["*.jsonl", "*session*.json", "*transcript*.json"],
+    )
+
+
 def finish(agent_id, name, stats, extra=None):
     stats["recentDays"] = [{"date": item, "messageCount": stats["recentDays"][item]} for item in DAYS]
     stats["activeDates"] = sorted(stats["activeDates"])
@@ -293,3 +402,4 @@ def antigravity_previous_limits():
 
 if __name__ == "__main__":
     collect_crush(); collect_opencode(); collect_copilot(); collect_antigravity()
+    collect_cursor(); collect_gemini(); collect_pi(); collect_continue()

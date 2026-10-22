@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "raven.agents-dashboard",
+  "name": "Blackbox Agents Dashboard",
+  "version": "1.0.0",
+  "author": "Darkstardevx",
+  "license": "MIT",
+  "description": "Standalone Cyberdeck/Mission Control dashboard for agent usage and quota telemetry.",
+  "kinds": [
+    "panel"
+  ],
+  "activation": "on-demand",
+  "entryPoints": {
+    "panel": "Panel.qml"
+  },
+  "keepLoaded": false,
+  "omarchy": {
+    "clonedFrom": "raven.agents"
+  }
+}

@@ -64,6 +64,14 @@ Panel {
       return String(provider.providerId) === root.providerFilter
     })
   }
+  readonly property int activeProviderCount: providers.filter(root.providerIsActive).length
+  readonly property int quotaProviderCount: providers.filter(function(provider) {
+    return provider.limits && provider.limits.length > 0
+  }).length
+  readonly property int staleProviderCount: providers.filter(function(provider) {
+    return provider.limitsStale === true || root.statusDisplayText(provider.usageStatusText) !== ""
+  }).length
+  readonly property string telemetryState: staleProviderCount > 0 ? "ATTENTION" : "NOMINAL"
 
   property bool cursorActive: false
   property string providerFilter: "active"
@@ -1014,8 +1022,8 @@ Panel {
     bar: root.bar
     open: root.opened
     focusTarget: panel.loadedContent
-    contentWidth: panel.fittedContentWidth(Style.space(380))
-    contentHeight: panel.fittedContentHeight(panel.loadedContentHeight, Style.space(860))
+    contentWidth: panel.fittedContentWidth(Style.space(520))
+    contentHeight: panel.fittedContentHeight(panel.loadedContentHeight, Style.space(980))
 
     content: PanelKeyCatcher {
       id: keyCatcher
@@ -1125,6 +1133,63 @@ Panel {
           AddView {
             visible: root.addStage !== "" || root.blankSlate
             width: column.width
+          }
+
+          Rectangle {
+            visible: root.addStage === "" && !root.blankSlate
+            width: parent.width
+            height: Style.space(72)
+            radius: Style.cornerRadius
+            color: root.alpha(root.surface, 0.72)
+            border.width: 1
+            border.color: root.alpha(Commons.Color.accent, 0.34)
+
+            Row {
+              anchors.fill: parent
+              anchors.margins: Style.space(10)
+              spacing: Style.space(8)
+
+              Repeater {
+                model: [
+                  { label: "ONLINE", value: root.activeProviderCount, tone: Commons.Color.accent },
+                  { label: "QUOTA", value: root.quotaProviderCount, tone: root.foreground },
+                  { label: "STATE", value: root.telemetryState, tone: root.staleProviderCount > 0 ? root.urgent : Commons.Color.accent }
+                ]
+
+                Rectangle {
+                  required property var modelData
+                  width: (parent.width - parent.spacing * 2) / 3
+                  height: parent.height
+                  radius: Style.cornerRadius
+                  color: root.alpha(modelData.tone, 0.08)
+
+                  Column {
+                    anchors.centerIn: parent
+                    spacing: Style.space(3)
+
+                    Text {
+                      anchors.horizontalCenter: parent.horizontalCenter
+                      textFormat: Text.PlainText
+                      text: modelData.label
+                      color: root.dim
+                      font.family: root.fontFamily
+                      font.pixelSize: Style.font.caption
+                      font.bold: true
+                    }
+
+                    Text {
+                      anchors.horizontalCenter: parent.horizontalCenter
+                      textFormat: Text.PlainText
+                      text: String(modelData.value)
+                      color: modelData.tone
+                      font.family: root.fontFamily
+                      font.pixelSize: Style.font.body
+                      font.bold: true
+                    }
+                  }
+                }
+              }
+            }
           }
 
           Dropdown {

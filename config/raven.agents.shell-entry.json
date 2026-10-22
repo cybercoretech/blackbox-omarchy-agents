@@ -15,6 +15,18 @@
     },
     "antigravity": {
       "enabled": true
+    },
+    "cursor": {
+      "enabled": true
+    },
+    "gemini": {
+      "enabled": true
+    },
+    "pi": {
+      "enabled": true
+    },
+    "continue": {
+      "enabled": true
     }
   }
 }

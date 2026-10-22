@@ -1,4 +1,4 @@
-# Agents
+# 🤖 Agents
 
 One bar icon and one panel for every AI coding subscription on the machine.
 The panel is strictly a display: it watches the usage records that
@@ -7,7 +7,7 @@ and draws whatever appears there. `Panel.qml` owns the bar button and the
 popup; `Main.qml` discovers and watches the records (and handles the optional
 cross-device aggregation); `Agent.qml` is the per-record file watcher.
 
-## Panel
+## 📊 Panel
 
 Every subscription on one page, limits first.
 
@@ -62,7 +62,11 @@ Use the **Agent view** dropdown to select a provider. It is also reachable
 with the panel cursor; press Enter on it, then use Up/Down (or `j`/`k`) and
 Enter to choose an agent.
 
-## Data
+For the full dashboard, use `omarchy-shell shell toggle raven.agents-dashboard`.
+It opens a standalone Quickshell window with a two-column provider grid,
+scope selector, refresh control, and keyboard shortcuts.
+
+## 💾 Data
 
 Each agent is one JSON record in `~/.local/state/omarchy/agents/usage/`,
 written by `omarchy-agent-usage-update`. That command runs one
@@ -81,8 +85,12 @@ Adding an agent needs no QML changes: ship a collector that prints the record co
 | `kimi` | Kimi Code quotas (5-hour session, weekly, and monthly allowances) | none; quota only |
 | `copilot` | GitHub's authoritative premium-request allowance from the VS Code quota bridge | Copilot CLI and VS Code local history |
 | `antigravity` | Authoritative weekly buckets from `agy -p /usage --output-format json` | `~/.gemini/antigravity-cli/conversation_summaries.db` |
+| `cursor` | No authoritative quota endpoint collected | Cursor Agent event/transcript files when present |
+| `gemini` | No authoritative quota endpoint collected | `~/.gemini/tmp/*/logs.json` and JSONL transcripts |
+| `pi` | No authoritative quota endpoint collected | Pi session/transcript files under `~/.pi/agent` |
+| `continue` | No authoritative quota endpoint collected | Continue session/transcript files under `~/.continue` |
 
-### Installed CLI setup
+### 🧰 Installed CLI setup
 
 The current machine has runnable commands for Claude Code, Codex, Copilot,
 Crush, Cursor Agent, Gemini, Grok, Kimi, OpenCode, Pi, and Antigravity.
@@ -102,6 +110,11 @@ Copilot quota comes from the local VS Code quota bridge, and Antigravity
 quota comes from its structured `/usage` command; neither meter is inferred
 from token counts. Unsupported tools need a dedicated collector before they
 can appear as authoritative quota rows.
+
+The four local-activity collectors are deliberately conservative: missing
+homes, missing transcripts, malformed records, and absent quota endpoints are
+treated as no data. They never turn token counts into a percentage or claim a
+quota that the provider did not report.
 
 Antigravity's `/usage` command reports separate weekly buckets for Gemini and
 Claude/GPT models. The collector preserves the last successful quota response
@@ -143,7 +156,7 @@ Expired tokens are refreshed under the current CLI's renewable directory lock at
 
 Limits probes reuse a result for one minute unless `--force` is requested. A failed probe retains the last-known limits with stale metadata. Cache identity follows the token used by the request, and a refresh this collector performs carries the same account's previous limits forward. Different credentials or endpoints never share cached quota.
 
-### Fireworks balance
+### 💳 Fireworks balance
 
 The collector first asks the account's `:getBalance` endpoint for the real
 prepaid ledger. That endpoint exists but is permission-gated, and as of
@@ -171,7 +184,7 @@ accounts. Without a configured `fundedAmount` the tab still shows token
 usage, just no balance. With a live ledger, `fundedAmount` is optional and
 only adds the meter and the spent-of-funded line under the real figure.
 
-## Interactions
+## 🕹️ Interactions
 
 - Bar icon: left = panel, right = launch agent, middle = refresh. It turns
   urgent when any account new sessions use is at 90% of a window, or a
@@ -192,7 +205,7 @@ only adds the meter and the spent-of-funded line under the real figure.
   threshold (80% at the default), the limits refresh every three minutes.
 - IPC: `omarchy-shell raven.agents <open|close|toggle|refresh>`.
 
-## Settings
+## ⚙️ Settings
 
 Settings live in the widget's entry in `~/.config/omarchy/shell.json`. The
 top-level keys can be set with

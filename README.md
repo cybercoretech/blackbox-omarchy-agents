@@ -1,9 +1,9 @@
-# Blackbox Omarchy Agents
+# 🤖 Blackbox Omarchy Agents
 
 User-owned Omarchy Agents widget customization for local usage and
 authoritative quota display.
 
-## Contents
+## 📦 Contents
 
 - `omarchy/plugins/raven.agents/` — cloned, update-safe widget plugin.
 - `omarchy/bin/` — Copilot and Antigravity/extra-agent collectors.
@@ -13,7 +13,7 @@ authoritative quota display.
 - `config/raven.agents.shell-entry.json` — portable provider configuration
   entry, not a complete machine-specific `shell.json`.
 
-## Install
+## 🛠️ Install
 
 Copy the plugin to `~/.config/omarchy/plugins/raven.agents`, the collectors
 to `~/.local/bin`, the systemd units to `~/.config/systemd/user`, and the
@@ -30,9 +30,28 @@ systemctl --user enable --now omarchy-copilot-usage.timer
 omarchy-shell raven.agents refresh
 ```
 
+## ✅ Tests
+
+Run `./scripts/test-local.sh` before committing. It validates the collector
+fixtures, JSON contracts, source syntax, configuration, and documentation.
+
 Do not commit `~/.local/state/omarchy/agents/usage`, agent databases,
 OAuth/keyring data, quota snapshots, or backup files. They are local runtime
 data and may contain sensitive information.
 
 See `omarchy/plugins/raven.agents/README.md` for provider setup and collector
 details.
+
+## 🖥️ Standalone dashboard
+
+The full Cyberdeck/Mission Control view is available as a separate Quickshell
+window while the bar widget remains a compact launcher:
+
+```bash
+omarchy-shell shell toggle raven.agents-dashboard
+omarchy-shell shell open raven.agents-dashboard
+omarchy-shell shell close raven.agents-dashboard
+```
+
+The window has a two-column provider grid, provider scope selector, quota
+meters, local-activity labels, refresh controls, and keyboard shortcuts.
