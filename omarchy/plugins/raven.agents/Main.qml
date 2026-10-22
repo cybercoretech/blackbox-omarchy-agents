@@ -12,6 +12,19 @@ Item {
   visible: false
 
   property var settings: ({})
+  readonly property var defaultFutureCatalog: [
+    { id: "aider", name: "Aider", command: "aider" },
+    { id: "goose", name: "Goose", command: "goose" },
+    { id: "qwen", name: "Qwen Code", command: "qwen" },
+    { id: "roo", name: "Roo Code", command: "roo" },
+    { id: "cline", name: "Cline", command: "cline" },
+    { id: "amp", name: "Amp", command: "amp" },
+    { id: "warp", name: "Warp Agent", command: "warp" },
+    { id: "amazon-q", name: "Amazon Q", command: "q" }
+  ]
+  readonly property var futureCatalog: settings && Array.isArray(settings.futureProviders)
+    && settings.futureProviders.length > 0 ? settings.futureProviders : defaultFutureCatalog
+  property var futureInstalled: ({})
 
   readonly property string home: Quickshell.env("HOME") || ""
   readonly property string usageDir: (Quickshell.env("XDG_STATE_HOME") || home + "/.local/state") + "/omarchy/agents/usage"
@@ -31,6 +44,40 @@ Item {
       waitForEnd: true
       onStreamFinished: root.applyAgentListing(text)
     }
+
+  }
+
+  Process {
+    id: futureProbe
+    running: false
+    command: ["sh", "-c", root.futureProbeScript()]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: root.applyFutureProbe(text)
+    }
+  }
+
+  function futureProbeScript() {
+    var checks = []
+    for (var i = 0; i < futureCatalog.length; i++) {
+      var candidate = futureCatalog[i]
+      if (!candidate || !/^[A-Za-z0-9._+-]+$/.test(String(candidate.command || ""))) continue
+      checks.push("command -v '" + candidate.command + "' >/dev/null 2>&1 && printf '%s\\n' '" + candidate.id + "'")
+    }
+    return checks.join("; ")
+  }
+
+  function probeFutureAgents() {
+    if (!futureProbe.running) futureProbe.running = true
+  }
+
+  function applyFutureProbe(output) {
+    var installed = {}
+    String(output || "").split("\n").forEach(function(id) {
+      id = id.trim()
+      if (id !== "") installed[id] = true
+    })
+    futureInstalled = installed
   }
 
   function rescanAgents() {
@@ -117,6 +164,7 @@ Item {
 
   Component.onCompleted: {
     rescanAgents()
+    probeFutureAgents()
     if (syncConfigured()) scheduleSync()
   }
 
@@ -158,6 +206,7 @@ Item {
     running: false
     onExited: {
       root.rescanAgents()
+      root.probeFutureAgents()
       root.reloadRecords()
       if (root.pendingUpdateKind !== "") {
         var kind = root.pendingUpdateKind
@@ -237,6 +286,50 @@ Item {
     }
     return orderedProviders(result)
   }
+
+  // Keep a visible, inactive catalog entry for likely future providers. A
+  // candidate never becomes active, and never receives a quota meter, until a
+  // real collector record is written for it.
+  readonly property var futureProviders: {
+    var known = {}
+    for (var i = 0; i < enabledProviders.length; i++) known[enabledProviders[i].providerId] = true
+    var result = []
+    for (var j = 0; j < futureCatalog.length; j++) {
+      var candidate = futureCatalog[j]
+      if (!candidate || known[candidate.id]) continue
+      result.push({
+        providerId: candidate.id,
+        providerName: candidate.name,
+        updatedAt: "",
+        ready: false,
+        future: true,
+        installed: futureInstalled[candidate.id] === true,
+        usageStatusText: futureInstalled[candidate.id] === true
+          ? "Installed · collector not configured"
+          : "Not installed",
+        authHelpText: "",
+        limits: [],
+        limitsStale: false,
+        limitsFetchedAt: 0,
+        tierLabel: futureInstalled[candidate.id] === true ? "Detected" : "Future provider",
+        accounts: [],
+        accountSwitch: ({ mode: "manual", threshold: 95 }),
+        balance: null,
+        todayTokens: 0,
+        todayPrompts: 0,
+        todaySessions: 0,
+        totalTokens: 0,
+        totalPrompts: 0,
+        totalSessions: 0,
+        activeDays: 0,
+        syncEnabled: false,
+        syncDeviceCount: 0
+      })
+    }
+    return result
+  }
+
+  readonly property var availableProviders: enabledProviders.concat(futureProviders)
 
   // ----------------------------------------------------------------- order
   //

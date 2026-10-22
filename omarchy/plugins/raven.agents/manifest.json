@@ -58,6 +58,16 @@
           "enabled": true
         }
       },
+      "futureProviders": [
+        { "id": "aider", "name": "Aider", "command": "aider" },
+        { "id": "goose", "name": "Goose", "command": "goose" },
+        { "id": "qwen", "name": "Qwen Code", "command": "qwen" },
+        { "id": "roo", "name": "Roo Code", "command": "roo" },
+        { "id": "cline", "name": "Cline", "command": "cline" },
+        { "id": "amp", "name": "Amp", "command": "amp" },
+        { "id": "warp", "name": "Warp Agent", "command": "warp" },
+        { "id": "amazon-q", "name": "Amazon Q", "command": "q" }
+      ],
       "refreshIntervalSec": 900,
       "syncMode": "Off",
       "syncDir": "",
@@ -65,6 +75,22 @@
       "syncDeviceId": ""
     },
     "schema": [
+      {
+        "key": "futureProviders",
+        "type": "json",
+        "label": "Future provider catalog",
+        "defaultValue": [
+          { "id": "aider", "name": "Aider", "command": "aider" },
+          { "id": "goose", "name": "Goose", "command": "goose" },
+          { "id": "qwen", "name": "Qwen Code", "command": "qwen" },
+          { "id": "roo", "name": "Roo Code", "command": "roo" },
+          { "id": "cline", "name": "Cline", "command": "cline" },
+          { "id": "amp", "name": "Amp", "command": "amp" },
+          { "id": "warp", "name": "Warp Agent", "command": "warp" },
+          { "id": "amazon-q", "name": "Amazon Q", "command": "q" }
+        ],
+        "description": "Candidate CLIs to detect and show as inactive until a collector produces real usage data."
+      },
       {
         "key": "refreshIntervalSec",
         "type": "integer",

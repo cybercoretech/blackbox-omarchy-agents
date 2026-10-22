@@ -23,7 +23,7 @@ Panel {
   readonly property Item providerSections: panel.loadedContent ? panel.loadedContent.providerSections : null
 
   readonly property color cyberFg: "#e8e8e8"
-  readonly property color cyberPanel: "#12161f"
+  readonly property color cyberPanel: "#111821"
   readonly property color cyberLine: "#242938"
   readonly property color cyberCyan: "#22d3ee"
   readonly property color cyberGreen: "#39ff14"
@@ -38,7 +38,7 @@ Panel {
 
   // Every subscription on one page, limits first: the question this panel
   // answers is how much room is left, and where.
-  readonly property var providers: usage.enabledProviders
+  readonly property var providers: usage.availableProviders
   function providerIsActive(provider) {
     if (!provider) return false
     return Number(provider.todayTotalTokens || 0) > 0
@@ -76,7 +76,7 @@ Panel {
     return provider.limits && provider.limits.length > 0
   }).length
   readonly property int staleProviderCount: providers.filter(function(provider) {
-    return provider.limitsStale === true || root.statusDisplayText(provider.usageStatusText) !== ""
+    return !provider.future && (provider.limitsStale === true || root.statusDisplayText(provider.usageStatusText) !== "")
   }).length
   readonly property string telemetryState: staleProviderCount > 0 ? "ATTENTION" : "NOMINAL"
 
@@ -1146,7 +1146,7 @@ Panel {
             visible: root.addStage === "" && !root.blankSlate
             width: parent.width
             height: Style.space(72)
-            radius: Style.cornerRadius
+            radius: 2
             color: root.alpha(root.surface, 0.72)
             border.width: 1
             border.color: root.alpha(root.cyberCyan, 0.34)
@@ -1167,7 +1167,7 @@ Panel {
                   required property var modelData
                   width: (parent.width - parent.spacing * 2) / 3
                   height: parent.height
-                  radius: Style.cornerRadius
+                  radius: 2
                   color: root.alpha(modelData.tone, 0.08)
 
                   Column {

@@ -11,17 +11,18 @@ Item {
 
   property var settings: ({})
   property bool opened: window.visible
-  readonly property var providers: usage.enabledProviders
-  readonly property color cyberBg: "#0b0e14"
-  readonly property color cyberPanel: "#12161f"
-  readonly property color cyberLine: "#242938"
-  readonly property color cyberFg: "#e8e8e8"
-  readonly property color cyberMuted: "#7c8296"
-  readonly property color cyberGreen: "#39ff14"
-  readonly property color cyberPink: "#ff2d9e"
-  readonly property color cyberPurple: "#8b5cf6"
-  readonly property color cyberCyan: "#22d3ee"
-  readonly property color cyberRed: "#ff4d4d"
+  readonly property var providers: usage.availableProviders
+  readonly property color cyberBg: "#07090e"
+  readonly property color cyberPanel: "#111821"
+  readonly property color cyberLine: "#3a4656"
+  readonly property color cyberFg: "#f5f3ff"
+  readonly property color cyberMuted: "#8b98a8"
+  readonly property color cyberGreen: "#6ee7a8"
+  readonly property color cyberPink: "#ff2e97"
+  readonly property color cyberPurple: "#9b6bff"
+  readonly property color cyberCyan: "#2ee6f6"
+  readonly property color cyberOrange: "#ffb347"
+  readonly property color cyberRed: "#f1142d"
   readonly property color dim: cyberMuted
   property string selectedProvider: "all"
 
@@ -67,6 +68,8 @@ Item {
   }
 
   function statusColor(provider) {
+    if (provider.future)
+      return provider.installed ? cyberPurple : cyberMuted
     if (provider.limitsStale || provider.usageStatusText)
       return cyberRed
     return cyberGreen
@@ -123,8 +126,8 @@ Item {
 
             Text {
               textFormat: Text.PlainText
-              text: "BLACKBOX // AGENTS"
-              color: root.cyberPink
+              text: "[ AGENTS / STATUS ]"
+              color: root.cyberCyan
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
               font.bold: true
@@ -132,7 +135,7 @@ Item {
 
             Text {
               textFormat: Text.PlainText
-              text: "Usage telemetry and provider quota control"
+              text: "CYBERCORE OPERATOR TELEMETRY"
               color: root.cyberFg
               font.family: Style.font.family
               font.pixelSize: Style.font.title
@@ -158,7 +161,7 @@ Item {
           Layout.fillWidth: true
           height: 1
           color: root.cyberCyan
-          opacity: 0.7
+          opacity: 0.5
         }
 
         Flickable {
@@ -186,7 +189,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.minimumHeight: 150
                 Layout.preferredHeight: 170
-                radius: Style.cornerRadius
+                radius: 2
                 color: root.cyberPanel
                 border.width: 1
                 border.color: Qt.rgba(statusColor(modelData).r,
@@ -286,7 +289,9 @@ Item {
                   Text {
                     visible: modelData.limits.length === 0
                     textFormat: Text.PlainText
-                    text: "LOCAL ACTIVITY ONLY · no verified quota source"
+                    text: modelData.future
+                      ? (modelData.installed ? "DETECTED · COLLECTOR NOT CONFIGURED" : "FUTURE PROVIDER · NOT INSTALLED")
+                      : "LOCAL ACTIVITY ONLY · no verified quota source"
                     color: root.cyberMuted
                     font.family: Style.font.family
                     font.pixelSize: Style.font.caption

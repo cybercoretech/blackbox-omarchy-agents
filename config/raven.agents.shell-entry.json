@@ -28,5 +28,15 @@
     "continue": {
       "enabled": true
     }
-  }
+  },
+  "futureProviders": [
+    { "id": "aider", "name": "Aider", "command": "aider" },
+    { "id": "goose", "name": "Goose", "command": "goose" },
+    { "id": "qwen", "name": "Qwen Code", "command": "qwen" },
+    { "id": "roo", "name": "Roo Code", "command": "roo" },
+    { "id": "cline", "name": "Cline", "command": "cline" },
+    { "id": "amp", "name": "Amp", "command": "amp" },
+    { "id": "warp", "name": "Warp Agent", "command": "warp" },
+    { "id": "amazon-q", "name": "Amazon Q", "command": "q" }
+  ]
 }

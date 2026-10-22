@@ -18,6 +18,10 @@ Every subscription on one page, limits first.
 - **Agent view selector** — a compact dropdown switches between all active
   agents, inactive agents, or one provider at a time. This keeps the panel
   usable as more CLIs are installed.
+- **Future provider catalog** — likely future CLIs are detected with
+  `command -v` and appear under Inactive agents as _Detected_ or _Future
+  provider_. They remain informational until a real collector writes usage
+  data; no quota is inferred from installation alone.
 - **One section per agent** — its mark, name, and plan, then a compact line
   per limit window: its meter and the time until it resets (the exact percentage
   on hover). A model-scoped allowance on the same clock (Claude's Fable weekly
@@ -75,6 +79,12 @@ on its refresh timer and whenever you ask for a refresh, and picks up any
 record that lands in the directory regardless of who wrote it.
 
 Adding an agent needs no QML changes: ship a collector that prints the record contract (see the `claude` and `codex` collectors in `bin/`), and the panel gains a section. An `assets/<id>.svg` mark is optional, with an `assets/<id>-light.svg` twin if the mark needs a dark variant for light surfaces; the bar glyph stands in when there is none.
+
+The future catalog is configurable through the `futureProviders` manifest
+default. Each entry supplies an `id`, display `name`, and executable
+`command`; keep commands limited to simple executable names. Once a collector
+starts writing that provider's record, the real active provider replaces the
+catalog placeholder automatically.
 
 | Collector | Limits | Local stats |
 |---|---|---|

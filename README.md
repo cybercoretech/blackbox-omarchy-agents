@@ -59,3 +59,10 @@ Its palette follows the Cybercore schema: `#0b0e14` background, `#12161f`
 panels, cyan grid lines, acid-green healthy states, and hot-pink headings.
 The compact bar dropdown uses the same palette for its telemetry and provider
 states.
+
+## 🔭 Future agents
+
+The widget maintains a configurable catalog of likely future CLIs. It probes
+their executable names and lists installed candidates under **Inactive agents**
+until a real collector produces usage data. Installation alone never creates a
+quota meter or percentage.

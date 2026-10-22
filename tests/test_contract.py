@@ -33,6 +33,16 @@ class ContractTests(unittest.TestCase):
         self.assertTrue((dashboard / "Main.qml").is_file())
         self.assertTrue((dashboard / "Agent.qml").is_file())
 
+    def test_future_provider_catalog_is_safe_and_configurable(self):
+        manifest = json.loads(
+            (ROOT / "omarchy/plugins/raven.agents/manifest.json").read_text()
+        )
+        catalog = manifest["barWidget"]["defaults"]["futureProviders"]
+        self.assertGreaterEqual(len(catalog), 4)
+        for candidate in catalog:
+            self.assertRegex(candidate["id"], r"^[a-z0-9][a-z0-9-]*$")
+            self.assertRegex(candidate["command"], r"^[A-Za-z0-9._+-]+$")
+
     def test_source_stays_update_safe(self):
         for path in (ROOT / "omarchy").rglob("*"):
             if path.is_file():
