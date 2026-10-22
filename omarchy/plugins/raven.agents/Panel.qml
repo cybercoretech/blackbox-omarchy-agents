@@ -22,11 +22,18 @@ Panel {
   readonly property Item column: panel.loadedContent ? panel.loadedContent.column : null
   readonly property Item providerSections: panel.loadedContent ? panel.loadedContent.providerSections : null
 
-  readonly property color foreground: bar ? bar.foreground : Commons.Color.foreground
-  readonly property color urgent: bar ? bar.urgent : Commons.Color.urgent
-  readonly property color dim: Qt.darker(foreground, 1.55)
-  readonly property color surface: Commons.Color.popups.background
-  readonly property color track: Style.selectedFillFor(foreground, Commons.Color.accent)
+  readonly property color cyberFg: "#e8e8e8"
+  readonly property color cyberPanel: "#12161f"
+  readonly property color cyberLine: "#242938"
+  readonly property color cyberCyan: "#22d3ee"
+  readonly property color cyberGreen: "#39ff14"
+  readonly property color cyberPink: "#ff2d9e"
+  readonly property color cyberRed: "#ff4d4d"
+  readonly property color foreground: cyberFg
+  readonly property color urgent: cyberRed
+  readonly property color dim: "#7c8296"
+  readonly property color surface: cyberPanel
+  readonly property color track: cyberCyan
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
 
   // Every subscription on one page, limits first: the question this panel
@@ -1142,7 +1149,7 @@ Panel {
             radius: Style.cornerRadius
             color: root.alpha(root.surface, 0.72)
             border.width: 1
-            border.color: root.alpha(Commons.Color.accent, 0.34)
+            border.color: root.alpha(root.cyberCyan, 0.34)
 
             Row {
               anchors.fill: parent
@@ -1151,9 +1158,9 @@ Panel {
 
               Repeater {
                 model: [
-                  { label: "ONLINE", value: root.activeProviderCount, tone: Commons.Color.accent },
+                  { label: "ONLINE", value: root.activeProviderCount, tone: root.cyberGreen },
                   { label: "QUOTA", value: root.quotaProviderCount, tone: root.foreground },
-                  { label: "STATE", value: root.telemetryState, tone: root.staleProviderCount > 0 ? root.urgent : Commons.Color.accent }
+                  { label: "STATE", value: root.telemetryState, tone: root.staleProviderCount > 0 ? root.urgent : root.cyberCyan }
                 ]
 
                 Rectangle {
@@ -1336,7 +1343,7 @@ Panel {
               anchors.horizontalCenter: parent.horizontalCenter
               textFormat: Text.PlainText
               text: choice.modelData.providerName
-              color: choice.hasCursor ? Commons.Color.accent : root.foreground
+              color: choice.hasCursor ? root.cyberCyan : root.foreground
               font.family: root.fontFamily
               font.pixelSize: Style.font.body
               font.bold: true
@@ -1416,7 +1423,7 @@ Panel {
         Text {
           textFormat: Text.PlainText
           text: root.addCode
-          color: Commons.Color.accent
+          color: root.cyberPink
           font.family: root.fontFamily
           font.pixelSize: Style.font.display
           font.bold: true
@@ -1784,7 +1791,7 @@ Panel {
     property bool hasCursor: false
     implicitHeight: tileBody.implicitHeight + Style.space(20)
     radius: Style.cornerRadius
-    color: hasCursor ? root.alpha(Commons.Color.accent, 0.14) : root.alpha(root.foreground, 0.05)
+    color: hasCursor ? root.alpha(root.cyberCyan, 0.14) : root.alpha(root.foreground, 0.05)
     onHasCursorChanged: if (hasCursor) root.revealItem(tile)
 
     Row {
@@ -1796,7 +1803,7 @@ Panel {
         anchors.verticalCenter: parent.verticalCenter
         textFormat: Text.PlainText
         text: tile.glyph
-        color: Commons.Color.accent
+        color: root.cyberCyan
         font.family: root.fontFamily
         font.pixelSize: Style.font.heading
       }
@@ -1805,7 +1812,7 @@ Panel {
         anchors.verticalCenter: parent.verticalCenter
         textFormat: Text.PlainText
         text: tile.title
-        color: tile.hasCursor ? Commons.Color.accent : root.foreground
+        color: tile.hasCursor ? root.cyberCyan : root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
         font.bold: true
@@ -1839,16 +1846,16 @@ Panel {
     implicitHeight: implicitWidth
     radius: Style.cornerRadius
     // The cursor needs more than a shade deeper to read on a tinted square.
-    color: root.alpha(Commons.Color.accent, hasCursor ? 0.3 : 0.12)
+    color: root.alpha(root.cyberCyan, hasCursor ? 0.3 : 0.12)
     border.width: hasCursor ? Math.max(1, Style.hoverBorderWidth) : 0
-    border.color: Commons.Color.accent
+    border.color: root.cyberCyan
     onHasCursorChanged: if (hasCursor) root.revealItem(heroButton)
 
     Text {
       anchors.centerIn: parent
       textFormat: Text.PlainText
       text: heroButton.glyph
-      color: Commons.Color.accent
+      color: root.cyberCyan
       font.family: root.fontFamily
       font.pixelSize: Style.font.heading
     }
@@ -1880,7 +1887,7 @@ Panel {
     readonly property bool hot: linkMouse.containsMouse || picked
     onPickedChanged: if (picked) root.revealItem(link)
     textFormat: Text.PlainText
-    color: current ? Commons.Color.accent : (hot ? root.foreground : idleColor)
+    color: current ? root.cyberCyan : (hot ? root.foreground : idleColor)
     font.family: root.fontFamily
     font.pixelSize: Style.font.caption
     font.bold: current
@@ -1961,7 +1968,7 @@ Panel {
         anchors.verticalCenter: parent.verticalCenter
         width: Math.min(implicitWidth, parent.width * 0.6)
         text: head.label
-        color: head.picked ? Commons.Color.accent : root.foreground
+        color: head.picked ? root.cyberCyan : root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
         font.bold: head.isActive
@@ -2067,7 +2074,7 @@ Panel {
         anchors.right: parent.right
         text: Commons.I18n.t("agents.active")
         textFormat: Text.PlainText
-        color: Commons.Color.accent
+        color: root.cyberCyan
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
         font.bold: true
