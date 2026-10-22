@@ -55,3 +55,5 @@ omarchy-shell shell close raven.agents-dashboard
 
 The window uses a compact three-column provider grid, provider scope selector,
 quota meters, local-activity labels, refresh controls, and keyboard shortcuts.
+Its palette follows the Cybercore schema: `#0b0e14` background, `#12161f`
+panels, cyan grid lines, acid-green healthy states, and hot-pink headings.

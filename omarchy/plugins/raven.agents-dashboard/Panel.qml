@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs.Commons
-import qs.Commons as Commons
 import qs.Ui
 
 Item {
@@ -13,7 +12,17 @@ Item {
   property var settings: ({})
   property bool opened: window.visible
   readonly property var providers: usage.enabledProviders
-  readonly property color dim: Qt.darker(Commons.Color.foreground, 1.55)
+  readonly property color cyberBg: "#0b0e14"
+  readonly property color cyberPanel: "#12161f"
+  readonly property color cyberLine: "#242938"
+  readonly property color cyberFg: "#e8e8e8"
+  readonly property color cyberMuted: "#7c8296"
+  readonly property color cyberGreen: "#39ff14"
+  readonly property color cyberPink: "#ff2d9e"
+  readonly property color cyberPurple: "#8b5cf6"
+  readonly property color cyberCyan: "#22d3ee"
+  readonly property color cyberRed: "#ff4d4d"
+  readonly property color dim: cyberMuted
   property string selectedProvider: "all"
 
   function open(payload) {
@@ -59,8 +68,8 @@ Item {
 
   function statusColor(provider) {
     if (provider.limitsStale || provider.usageStatusText)
-      return Commons.Color.urgent
-    return Commons.Color.accent
+      return cyberRed
+    return cyberGreen
   }
 
   Main {
@@ -79,7 +88,7 @@ Item {
     id: window
     title: "Blackbox Agents"
     visible: false
-    color: Commons.Color.background
+    color: root.cyberBg
     implicitWidth: 1180
     implicitHeight: 680
     minimumSize: Qt.size(940, 560)
@@ -115,7 +124,7 @@ Item {
             Text {
               textFormat: Text.PlainText
               text: "BLACKBOX // AGENTS"
-              color: Commons.Color.accent
+              color: root.cyberPink
               font.family: Style.font.family
               font.pixelSize: Style.font.caption
               font.bold: true
@@ -124,7 +133,7 @@ Item {
             Text {
               textFormat: Text.PlainText
               text: "Usage telemetry and provider quota control"
-              color: Commons.Color.foreground
+              color: root.cyberFg
               font.family: Style.font.family
               font.pixelSize: Style.font.title
               font.bold: true
@@ -148,8 +157,8 @@ Item {
         Rectangle {
           Layout.fillWidth: true
           height: 1
-          color: Commons.Color.accent
-          opacity: 0.35
+          color: root.cyberCyan
+          opacity: 0.7
         }
 
         Flickable {
@@ -178,9 +187,7 @@ Item {
                 Layout.minimumHeight: 150
                 Layout.preferredHeight: 170
                 radius: Style.cornerRadius
-                color: Qt.rgba(Commons.Color.popups.background.r,
-                               Commons.Color.popups.background.g,
-                               Commons.Color.popups.background.b, 0.92)
+                color: root.cyberPanel
                 border.width: 1
                 border.color: Qt.rgba(statusColor(modelData).r,
                                        statusColor(modelData).g,
@@ -207,7 +214,7 @@ Item {
                       width: parent.width - x
                       textFormat: Text.PlainText
                       text: String(modelData.providerName || modelData.providerId)
-                      color: Commons.Color.foreground
+                      color: root.cyberFg
                       font.family: Style.font.family
                       font.pixelSize: Style.font.body
                       font.bold: true
@@ -223,7 +230,7 @@ Item {
                       var sessions = Number(modelData.todaySessions || 0)
                       return prompts + " prompts  •  " + sessions + " sessions today"
                     }
-                    color: Commons.Color.foreground
+                    color: root.cyberFg
                     font.family: Style.font.family
                     font.pixelSize: Style.font.caption
                   }
@@ -243,7 +250,7 @@ Item {
                           width: parent.width * 0.68
                           textFormat: Text.PlainText
                           text: String(modelData.title || modelData.label || "Quota")
-                          color: Commons.Color.foreground
+                          color: root.cyberFg
                           font.family: Style.font.family
                           font.pixelSize: Style.font.caption
                           elide: Text.ElideRight
@@ -264,9 +271,7 @@ Item {
                         width: parent.width
                         height: Style.space(6)
                         radius: height / 2
-                        color: Qt.rgba(Commons.Color.foreground.r,
-                                       Commons.Color.foreground.g,
-                                       Commons.Color.foreground.b, 0.12)
+                        color: root.cyberLine
 
                         Rectangle {
                           width: parent.width * root.percent(modelData)
@@ -282,7 +287,7 @@ Item {
                     visible: modelData.limits.length === 0
                     textFormat: Text.PlainText
                     text: "LOCAL ACTIVITY ONLY · no verified quota source"
-                    color: root.dim
+                    color: root.cyberMuted
                     font.family: Style.font.family
                     font.pixelSize: Style.font.caption
                   }
