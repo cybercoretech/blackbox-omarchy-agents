@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh GitHub Copilot usage every five minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=omarchy-copilot-usage.service
+
+[Install]
+WantedBy=timers.target

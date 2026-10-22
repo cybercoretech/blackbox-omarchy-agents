@@ -1,0 +1,20 @@
+{
+  "id": "raven.agents",
+  "providers": {
+    "claude": {
+      "enabled": true
+    },
+    "codex": {
+      "enabled": true
+    },
+    "fireworks": {
+      "enabled": true
+    },
+    "copilot": {
+      "enabled": true
+    },
+    "antigravity": {
+      "enabled": true
+    }
+  }
+}

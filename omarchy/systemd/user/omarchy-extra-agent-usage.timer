@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh extra Omarchy agent usage every 15 minutes
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=15min
+Unit=omarchy-extra-agent-usage.service
+
+[Install]
+WantedBy=timers.target

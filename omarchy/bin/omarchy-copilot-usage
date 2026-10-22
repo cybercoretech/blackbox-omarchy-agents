@@ -1,0 +1,170 @@
+#!/usr/bin/env node
+"use strict";
+
+// Bridge local Copilot Chat and CLI history into Omarchy's Agents panel.
+// Prompt text is read only by the installed Copilot Insights parser and is
+// never written or sent anywhere by this script.
+
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+
+const home = os.homedir();
+const stateHome = process.env.XDG_STATE_HOME || path.join(home, ".local", "state");
+const outputDir = path.join(stateHome, "omarchy", "agents", "usage");
+const extensionsDir = path.join(home, ".vscode", "extensions");
+
+function usageParserPath() {
+  const dirs = fs.readdirSync(extensionsDir)
+    .filter((name) => name.startsWith("karimulla-shah.github-copilot-insights-"))
+    .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+  for (const dir of dirs) {
+    const candidate = path.join(extensionsDir, dir, "out", "copilotUsage.js");
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  throw new Error("GitHub Copilot Insights parser is not installed");
+}
+
+function localDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function count(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? Math.floor(number) : 0;
+}
+
+const now = new Date();
+const today = localDate(now);
+const quotaFile = path.join(stateHome, "omarchy", "agents", "copilot-quota.json");
+const outputFile = path.join(outputDir, "copilot.json");
+let records = [];
+let previous = null;
+try {
+  records = require(usageParserPath()).collectCopilotUsage().records || [];
+} catch (error) {
+  console.warn("Copilot Insights parser could not be read:", error && error.message ? error.message : "unknown error");
+}
+if (records.length === 0) {
+  try {
+    if (!fs.lstatSync(outputFile).isSymbolicLink()) {
+      const candidate = JSON.parse(fs.readFileSync(outputFile, "utf8"));
+      if (candidate && candidate.id === "copilot" && candidate.hasLocalStats === true) previous = candidate;
+    }
+  } catch {}
+}
+let quota = null;
+try {
+  if (!fs.lstatSync(quotaFile).isSymbolicLink()) {
+    const candidate = JSON.parse(fs.readFileSync(quotaFile, "utf8"));
+    const limit = candidate && candidate.limit;
+    if (limit && Number.isFinite(Number(limit.percent)) && Number.isFinite(Number(limit.used))
+      && Number.isFinite(Number(limit.total)) && typeof candidate.updatedAt === "string") {
+      const age = now.getTime() - Date.parse(candidate.updatedAt);
+      quota = {
+        plan: typeof candidate.plan === "string" && candidate.plan ? candidate.plan : "Copilot",
+        limit,
+        stale: !Number.isFinite(age) || age > 15 * 60 * 1000,
+      };
+    }
+  }
+} catch {}
+const recentDates = Array.from({ length: 7 }, (_, i) => {
+  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6 + i);
+  return localDate(date);
+});
+const dailyTokens = new Map();
+const dailyPrompts = new Map();
+const dailySessions = new Map();
+const sessions = new Set();
+const todaySessionIds = new Set();
+const todayTokensByModel = {};
+const modelUsage = {};
+let todayPrompts = 0;
+let todayTotalTokens = 0;
+
+for (const record of records) {
+  const model = String(record.model || "unknown").slice(0, 200);
+  const inputTokens = count(record.inputTokens);
+  const outputTokens = count(record.outputTokens);
+  const totalTokens = count(record.totalTokens) || inputTokens + outputTokens;
+  const sessionId = record.sessionId == null ? "" : String(record.sessionId);
+  if (sessionId) sessions.add(sessionId);
+
+  const modelBucket = modelUsage[model] || (modelUsage[model] = {
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadInputTokens: 0,
+    cacheCreationInputTokens: 0,
+  });
+  modelBucket.inputTokens += inputTokens;
+  modelBucket.outputTokens += outputTokens;
+
+  const timestamp = record.timestamp ? new Date(record.timestamp) : null;
+  if (!timestamp || !Number.isFinite(timestamp.getTime())) continue;
+  const date = localDate(timestamp);
+  dailyTokens.set(date, (dailyTokens.get(date) || 0) + totalTokens);
+  dailyPrompts.set(date, (dailyPrompts.get(date) || 0) + 1);
+  if (sessionId) {
+    if (!dailySessions.has(date)) dailySessions.set(date, new Set());
+    dailySessions.get(date).add(sessionId);
+  }
+  if (date === today) {
+    todayPrompts++;
+    todayTotalTokens += totalTokens;
+    if (sessionId) todaySessionIds.add(sessionId);
+    todayTokensByModel[model] = (todayTokensByModel[model] || 0) + totalTokens;
+  }
+}
+
+const activeDates = Array.from(dailyPrompts.keys()).sort();
+const payload = previous && records.length === 0
+  ? {
+      ...previous,
+      schemaVersion: 1,
+      ready: true,
+      authHelpText: "Usage is read locally from VS Code Copilot Chat and Copilot CLI history. Quota is read through VS Code's GitHub sign-in.",
+      tierLabel: quota ? quota.plan : previous.tierLabel,
+      limits: quota ? [quota.limit] : (previous.limits || []),
+      limitsStale: quota ? quota.stale : previous.limitsStale,
+      updatedAt: now.toISOString(),
+    }
+  : {
+      schemaVersion: 1,
+      id: "copilot",
+      name: "Copilot",
+      ready: true,
+      hasLocalStats: records.length > 0,
+      hasPromptStats: true,
+      authHelpText: "Usage is read locally from VS Code Copilot Chat and Copilot CLI history. Quota is read through VS Code's GitHub sign-in.",
+      usageStatusText: "",
+      tierLabel: quota ? quota.plan : "Local usage",
+      limits: quota ? [quota.limit] : [],
+      limitsStale: quota ? quota.stale : false,
+      updatedAt: now.toISOString(),
+      todayPrompts,
+      todaySessions: todaySessionIds.size,
+      todayTotalTokens,
+      todayTokensByModel,
+      recentDays: recentDates.map((date) => ({ date, messageCount: dailyTokens.get(date) || 0 })),
+      totalPrompts: records.length,
+      totalSessions: sessions.size,
+      activeDays: activeDates.length,
+      activeDates,
+      modelUsage,
+    };
+
+fs.mkdirSync(outputDir, { recursive: true, mode: 0o700 });
+function isSymbolicLink(target) {
+  try { return fs.lstatSync(target).isSymbolicLink(); } catch { return false; }
+}
+if (isSymbolicLink(outputDir) || isSymbolicLink(outputFile)) {
+  throw new Error("Refusing to write through a symbolic link");
+}
+const tempFile = path.join(outputDir, `.copilot.${process.pid}.${Date.now()}.tmp`);
+try {
+  fs.writeFileSync(tempFile, JSON.stringify(payload, null, 2) + "\n", { mode: 0o600, flag: "wx" });
+  fs.renameSync(tempFile, outputFile);
+} finally {
+  try { fs.unlinkSync(tempFile); } catch {}
+}

@@ -1,0 +1,7 @@
+[Unit]
+Description=Update local GitHub Copilot usage for the Omarchy Agents panel
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/home/raven/.local/bin/omarchy-copilot-usage
