@@ -116,7 +116,7 @@ Panel {
     if (hero.length > 0) rows.push(hero)
     if (picking) {
       var choices = []
-      for (var k = 0; k < addProviders.length; k++) choices.push({ kind: "choice", index: k })
+      for (var k = 0; k < trackedCatalog.length; k++) choices.push({ kind: "catalog", index: k })
       rows.push(choices)
     } else if (addStage === "") {
       if (!blankSlate) rows.push([{ kind: "agentFilter", index: 0 }])
@@ -356,6 +356,14 @@ Panel {
   }
 
   function catalogAction(entry) {
+    for (var i = 0; i < addProviders.length; i++) {
+      if (addProviders[i].providerId !== entry.providerId) continue
+      var accountState = addChecks[entry.providerId] || ""
+      addProvider = entry.providerId
+      if (accountState === "additional") addStage = "name"
+      else startAdd("")
+      return
+    }
     var status = trackedProviderStatus(entry.providerId)
     if (status === "FUTURE") {
       var guide = installGuide(entry.providerId)
@@ -370,6 +378,12 @@ Panel {
     root.providerFilter = status === "ACTIVE" ? "active" : "inactive"
     root.addStage = ""
     root.refreshNow()
+  }
+
+  function catalogButtonLabel(entry) {
+    for (var i = 0; i < addProviders.length; i++)
+      if (addProviders[i].providerId === entry.providerId) return "ADD ACCOUNT"
+    return trackedProviderStatus(entry.providerId) === "FUTURE" ? "INSTALL" : "ADD"
   }
 
   readonly property var trackedCatalog: {
@@ -514,7 +528,7 @@ Panel {
     var target = keyTarget
     if (!target) refreshNow()
     else if (target.kind === "add") addStage !== "" ? cancelAdd() : addAccount()
-    else if (target.kind === "choice") chooseAddProvider(addProviders[target.index].providerId)
+    else if (target.kind === "catalog") catalogAction(trackedCatalog[target.index])
     else if (target.kind === "launch") launchAgent()
     else if (target.kind === "agentFilter") providerDropdown.open()
     else if (target.kind === "starter") startPrompt(starterPrompts[target.index].prompt)
@@ -979,7 +993,7 @@ Panel {
     cursorActive = false
     keyRow = 0
     keyColumn = 0
-    Qt.callLater(function() { if (picking) pointAt("choice", 0) })
+    Qt.callLater(function() { if (picking) pointAt("catalog", 0) })
   }
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
@@ -1373,36 +1387,38 @@ Panel {
       wrapMode: Text.WordWrap
     }
 
-    // Pick: each agent by a large mark over its name, three across.
-    Row {
-      id: choiceRow
+    // Every agent gets one icon tile and an explicit action.
+    Flow {
+      id: choiceGrid
       visible: root.picking
       width: parent.width
-      spacing: Style.space(10)
+      spacing: Style.space(8)
 
       Repeater {
-        model: root.picking ? root.addProviders : []
+        model: root.picking ? root.trackedCatalog : []
 
-        Item {
+        Rectangle {
           id: choice
           required property var modelData
           required property int index
-          readonly property string state: root.addChecks[modelData.providerId] || ""
-          readonly property bool available: state === "first" || state === "additional"
-          readonly property bool hasCursor: root.hasKey("choice", index)
-          width: (choiceRow.width - choiceRow.spacing * (root.addProviders.length - 1)) / root.addProviders.length
-          implicitHeight: choiceBody.implicitHeight + Style.space(16)
+          readonly property bool hasCursor: root.hasKey("catalog", index)
+          width: (choiceGrid.width - choiceGrid.spacing * 2) / 3
+          height: Style.space(106)
+          color: root.alpha(root.cyberPanel, hasCursor ? 1.0 : 0.82)
+          border.width: hasCursor ? 2 : 1
+          border.color: hasCursor ? root.cyberCyan : root.alpha(root.cyberLine, 0.9)
           onHasCursorChanged: if (hasCursor) root.revealItem(choice)
 
           Column {
             id: choiceBody
-            anchors.centerIn: parent
-            spacing: Style.space(10)
+            anchors.fill: parent
+            anchors.margins: Style.space(8)
+            spacing: Style.space(5)
 
             ProviderIcon {
               anchors.horizontalCenter: parent.horizontalCenter
               provider: choice.modelData
-              size: Style.font.display * 1.6
+              size: Style.font.display * 1.25
               scale: choice.hasCursor ? 1.08 : 1.0
               Behavior on scale { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutQuad } }
             }
@@ -1413,104 +1429,44 @@ Panel {
               text: choice.modelData.providerName
               color: choice.hasCursor ? root.cyberCyan : root.foreground
               font.family: root.fontFamily
-              font.pixelSize: Style.font.body
+              font.pixelSize: Style.font.caption
               font.bold: true
+              elide: Text.ElideRight
+            }
+
+            Rectangle {
+              width: Math.min(parent.width, Style.space(116))
+              height: Style.space(22)
+              anchors.horizontalCenter: parent.horizontalCenter
+              color: choice.hasCursor ? root.alpha(root.cyberCyan, 0.2) : root.alpha(root.cyberLine, 0.8)
+              border.width: 1
+              border.color: choice.hasCursor ? root.cyberCyan : root.alpha(root.cyberCyan, 0.5)
+
+              Text {
+                anchors.centerIn: parent
+                text: root.catalogButtonLabel(choice.modelData)
+                color: root.cyberCyan
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.tiny
+                font.bold: true
+              }
+
+              MouseArea {
+                anchors.fill: parent
+                z: 2
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.catalogAction(choice.modelData)
+              }
             }
           }
 
           MouseArea {
             anchors.fill: parent
             hoverEnabled: true
-            cursorShape: choice.available ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onEntered: root.pointAt("choice", choice.index)
-            onClicked: root.chooseAddProvider(choice.modelData.providerId)
-          }
-
-        }
-      }
-    }
-
-    Column {
-      visible: root.picking
-      width: parent.width
-      spacing: Style.space(6)
-
-      PanelSeparator { foreground: root.foreground }
-
-      Text {
-        width: parent.width
-        text: "AUTO-TRACKED AGENTS"
-        color: root.cyberCyan
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.caption
-        font.bold: true
-      }
-
-      Text {
-        width: parent.width
-        text: "These collectors appear automatically when usage is detected; they do not use the sign-in flow above."
-        color: root.dim
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.caption
-        wrapMode: Text.WordWrap
-      }
-
-      Flow {
-        width: parent.width
-        spacing: Style.space(6)
-
-        Repeater {
-          model: root.picking ? root.trackedCatalog : []
-
-          Rectangle {
-            required property var modelData
-            width: (parent.width - Style.space(12)) / 3
-            height: Style.space(42)
-            color: root.alpha(root.cyberPanel, 0.8)
-            border.width: 1
-            border.color: root.alpha(root.cyberLine, 0.9)
-            radius: 2
-
-            Row {
-              anchors.fill: parent
-              anchors.margins: Style.space(6)
-              spacing: Style.space(6)
-
-              ProviderIcon {
-                provider: modelData
-                size: Style.font.body
-                anchors.verticalCenter: parent.verticalCenter
-              }
-
-              Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 1
-
-                Text {
-                  width: Math.max(0, parent.parent.width - Style.space(24))
-                  text: modelData.providerName
-                  color: root.foreground
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.caption
-                  elide: Text.ElideRight
-                }
-
-                Text {
-                  text: root.trackedProviderStatus(modelData.providerId)
-                  color: root.trackedProviderStatus(modelData.providerId) === "ACTIVE"
-                    ? root.cyberGreen : root.dim
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.tiny
-                  font.bold: true
-                }
-              }
-
-              MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.catalogAction(parent.modelData)
-              }
-            }
+            propagateComposedEvents: true
+            cursorShape: Qt.PointingHandCursor
+            onEntered: root.pointAt("catalog", choice.index)
+            onClicked: root.catalogAction(choice.modelData)
           }
         }
       }

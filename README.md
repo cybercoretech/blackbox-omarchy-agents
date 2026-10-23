@@ -61,11 +61,10 @@ hot-pink headings. Provider rows use sharp, bordered cards with compact
 telemetry labels rather than an unstructured vertical list.
 The compact bar dropdown uses the same palette for its telemetry and provider
 states.
-The **Add an account** view keeps browser-based sign-in providers separate
-from the automatic-tracking catalog, which lists supported collectors and
-future candidates with their detected or active state. Clicking a missing
-future candidate opens a terminal with its install guidance; after installation
-the widget re-probes it and can show it as detected.
+The **Add an account** view presents every provider as an icon tile with an
+explicit `ADD ACCOUNT`, `ADD`, or `INSTALL` button. Missing future candidates
+open a terminal with install guidance; after installation the widget re-probes
+them and can show them as detected.
 
 ## 🔭 Future agents
 
