@@ -299,6 +299,19 @@ Panel {
     { providerId: "codex", providerName: "Codex" },
     { providerId: "grok", providerName: "Grok" }
   ]
+  readonly property var trackedProviderCatalog: [
+    { providerId: "claude", providerName: "Claude Code" },
+    { providerId: "codex", providerName: "Codex" },
+    { providerId: "grok", providerName: "Grok" },
+    { providerId: "fireworks", providerName: "Fireworks" },
+    { providerId: "kimi", providerName: "Kimi" },
+    { providerId: "copilot", providerName: "Copilot" },
+    { providerId: "antigravity", providerName: "Antigravity" },
+    { providerId: "cursor", providerName: "Cursor Agent" },
+    { providerId: "gemini", providerName: "Gemini CLI" },
+    { providerId: "pi", providerName: "Pi" },
+    { providerId: "continue", providerName: "Continue" }
+  ]
   property string addStage: ""
   property string addProvider: ""
   property var addChecks: ({})
@@ -315,6 +328,30 @@ Panel {
     for (var i = 0; i < addProviders.length; i++)
       if (addProviders[i].providerId === id) return addProviders[i].providerName
     return id
+  }
+
+  function trackedProviderStatus(id) {
+    for (var i = 0; i < root.providers.length; i++) {
+      var provider = root.providers[i]
+      if (provider.providerId !== id) continue
+      if (provider.future === true)
+        return provider.installed === true ? "DETECTED" : "FUTURE"
+      return "ACTIVE"
+    }
+    return "AUTO-TRACKED"
+  }
+
+  readonly property var trackedCatalog: {
+    var result = trackedProviderCatalog.slice()
+    var seen = {}
+    for (var i = 0; i < result.length; i++) seen[result[i].providerId] = true
+    var future = usage.futureCatalog || []
+    for (var j = 0; j < future.length; j++) {
+      var candidate = future[j]
+      if (!candidate || seen[candidate.id]) continue
+      result.push({ providerId: candidate.id, providerName: candidate.name })
+    }
+    return result
   }
 
   function addAccount() {
@@ -1358,6 +1395,85 @@ Panel {
             onClicked: root.chooseAddProvider(choice.modelData.providerId)
           }
 
+        }
+      }
+    }
+
+    Column {
+      visible: root.picking
+      width: parent.width
+      spacing: Style.space(6)
+
+      PanelSeparator { foreground: root.foreground }
+
+      Text {
+        width: parent.width
+        text: "AUTO-TRACKED AGENTS"
+        color: root.cyberCyan
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+        font.bold: true
+      }
+
+      Text {
+        width: parent.width
+        text: "These collectors appear automatically when usage is detected; they do not use the sign-in flow above."
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+        wrapMode: Text.WordWrap
+      }
+
+      Flow {
+        width: parent.width
+        spacing: Style.space(6)
+
+        Repeater {
+          model: root.picking ? root.trackedCatalog : []
+
+          Rectangle {
+            required property var modelData
+            width: (parent.width - Style.space(12)) / 3
+            height: Style.space(42)
+            color: root.alpha(root.cyberPanel, 0.8)
+            border.width: 1
+            border.color: root.alpha(root.cyberLine, 0.9)
+
+            Row {
+              anchors.fill: parent
+              anchors.margins: Style.space(6)
+              spacing: Style.space(6)
+
+              ProviderIcon {
+                provider: modelData
+                size: Style.font.body
+                anchors.verticalCenter: parent.verticalCenter
+              }
+
+              Column {
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 1
+
+                Text {
+                  width: Math.max(0, parent.parent.width - Style.space(24))
+                  text: modelData.providerName
+                  color: root.foreground
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                  elide: Text.ElideRight
+                }
+
+                Text {
+                  text: root.trackedProviderStatus(modelData.providerId)
+                  color: root.trackedProviderStatus(modelData.providerId) === "ACTIVE"
+                    ? root.cyberGreen : root.dim
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.tiny
+                  font.bold: true
+                }
+              }
+            }
+          }
         }
       }
     }
