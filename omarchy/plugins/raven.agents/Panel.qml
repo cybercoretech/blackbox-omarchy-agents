@@ -341,6 +341,37 @@ Panel {
     return "AUTO-TRACKED"
   }
 
+  function installGuide(id) {
+    var guides = {
+      "aider": ["Aider", "pipx install aider-chat", "https://aider.chat/docs/install.html"],
+      "goose": ["Goose", "Open the official install guide", "https://block.github.io/goose/docs/getting-started/installation/"],
+      "qwen": ["Qwen Code", "npm install -g @qwen-code/qwen-code@latest", "https://qwenlm.github.io/qwen-code-docs/"],
+      "roo": ["Roo Code", "code --install-extension rooveterinaryinc.roo-cline", "https://docs.roocode.com/"],
+      "cline": ["Cline", "code --install-extension saoudrizwan.claude-dev", "https://docs.cline.bot/"],
+      "amp": ["Amp", "Open the official install guide", "https://ampcode.com/manual#installation"],
+      "warp": ["Warp Agent", "Open the official install guide", "https://docs.warp.dev/agents/getting-started"],
+      "amazon-q": ["Amazon Q", "Open the official install guide", "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line.html"]
+    }
+    return guides[id] || [id, "Open the provider's official install guide", ""]
+  }
+
+  function catalogAction(entry) {
+    var status = trackedProviderStatus(entry.providerId)
+    if (status === "FUTURE") {
+      var guide = installGuide(entry.providerId)
+      var message = guide[0] + " installation\n\n"
+        + "Suggested action:\n  " + guide[1] + "\n\n"
+        + "Official guide:\n  " + guide[2] + "\n\n"
+        + "Run the command only after reviewing the provider's documentation."
+      Quickshell.execDetached(["omarchy-launch-terminal", "bash", "-lc",
+        "printf '%s\\n' " + Util.shellQuote(message) + "; exec bash"])
+      return
+    }
+    root.providerFilter = status === "ACTIVE" ? "active" : "inactive"
+    root.addStage = ""
+    root.refreshNow()
+  }
+
   readonly property var trackedCatalog: {
     var result = trackedProviderCatalog.slice()
     var seen = {}
@@ -1438,6 +1469,7 @@ Panel {
             color: root.alpha(root.cyberPanel, 0.8)
             border.width: 1
             border.color: root.alpha(root.cyberLine, 0.9)
+            radius: 2
 
             Row {
               anchors.fill: parent
@@ -1471,6 +1503,12 @@ Panel {
                   font.pixelSize: Style.font.tiny
                   font.bold: true
                 }
+              }
+
+              MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.catalogAction(parent.modelData)
               }
             }
           }

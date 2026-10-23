@@ -63,7 +63,9 @@ The compact bar dropdown uses the same palette for its telemetry and provider
 states.
 The **Add an account** view keeps browser-based sign-in providers separate
 from the automatic-tracking catalog, which lists supported collectors and
-future candidates with their detected or active state.
+future candidates with their detected or active state. Clicking a missing
+future candidate opens a terminal with its install guidance; after installation
+the widget re-probes it and can show it as detected.
 
 ## 🔭 Future agents
 
